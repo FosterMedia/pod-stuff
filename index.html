@@ -1,0 +1,218 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+
+    <style>
+        body {
+            background-color: #77aa77;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 2 1'%3E%3Cdefs%3E%3ClinearGradient id='a' gradientUnits='userSpaceOnUse' x1='0' x2='0' y1='0' y2='1'%3E%3Cstop offset='0' stop-color='%2377aa77'/%3E%3Cstop offset='1' stop-color='%234fd'/%3E%3C/linearGradient%3E%3ClinearGradient id='b' gradientUnits='userSpaceOnUse' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23cf8' stop-opacity='0'/%3E%3Cstop offset='1' stop-color='%23cf8' stop-opacity='1'/%3E%3C/linearGradient%3E%3ClinearGradient id='c' gradientUnits='userSpaceOnUse' x1='0' y1='0' x2='2' y2='2'%3E%3Cstop offset='0' stop-color='%23cf8' stop-opacity='0'/%3E%3Cstop offset='1' stop-color='%23cf8' stop-opacity='1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='0' y='0' fill='url(%23a)' width='2' height='1'/%3E%3Cg fill-opacity='0.5'%3E%3Cpolygon fill='url(%23b)' points='0 1 0 0 2 0'/%3E%3Cpolygon fill='url(%23c)' points='2 1 2 0 0 0'/%3E%3C/g%3E%3C/svg%3E");
+            background-attachment: fixed;
+            background-size: cover;
+        }
+        #table {
+            background-color: mintcream;
+        }
+    </style>
+</head>
+
+<body translate="no">
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Fountain Sales</h1>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <p><strong>Total Entries in File: <span id="totalEntries"></span></strong></p>
+                <p>No Sale Logged: <span id="salesCount"></span> | No Payment Info Logged: <span id="noPaymentCount"></span></p>
+            </div>
+
+
+            <div class="col-md-6">
+                <table id="table" class="table"></table>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="data">Raw Sales Records JSON</label>
+                    <textarea name="data" id="data" rows="20" class="form-control"></textarea>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+
+    <script src="https://static.codepen.io/assets/common/stopExecutionOnTimeout-de7e2ef6bfefd24b79a3f68b414b87b8db5b08439cac3f1012092b2290c719cd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    <script id="rendered-js">
+        $(document).ready(function() {
+            
+            /**** Step 1: Convert XML to JSON ******
+            ----------------------------------------
+            http://convertjson.com/xml-to-json.htm
+            
+            
+            /** Step 2: Add JSON file to folder ****
+            ----------------------------------------
+
+
+            /**** Step 3: Update name of file ******
+            ----------------------------------------
+            Change the name below to the name of the
+            file you would like to extract data from.
+            
+            ****************************************/
+            var filename = "10-30-2019.json";
+            /***************************************/
+            
+            
+            
+            /*
+            10-27
+            10-28
+            11-04
+            */
+            
+            $.getJSON("./JSON/" + filename, function(data) {
+
+                // intialize list
+                var rawData = data.DailyData.Checks;
+                console.log(rawData);
+
+                //isolate section with payment data
+                var sales = data.DailyData.Checks.Check
+
+                // print total entries to screen for record
+                $("#totalEntries").text(sales.length)
+
+                // count errors to print on page
+                var noSalesCount = 0;
+                var noPaymentCount = 0;
+
+                //empty arry to push objects into
+                var defaultData = [];
+
+
+                for (var i = 0; i < sales.length; i++) {
+
+                    //Check for seats                    
+                    if ('Seats' in sales[i]) {
+
+                        //Check for seat
+                        if ('Seat' in sales[i].Seats) {
+
+                            //check for payment record
+                            if ('PaymentRecord' in sales[i].Seats.Seat) {
+
+                                var paymentRecord = sales[i].Seats.Seat.PaymentRecord
+
+                                if (paymentRecord.length > 1) {
+
+                                    // loop through multiple payment records
+                                    for (item in paymentRecord) {
+
+                                        // map needed fields to an object to insert into array
+                                        var paymentObject2 = {
+                                            name: item.CustomerName ? item.CustomerName : 'N/A',
+                                            amount: item.Amount ? item.Amount : 'N/A',
+                                            tip: item.Tip ? item.Tip : 'N/A',
+                                            date: item.TimeStamp ? item.TimeStamp : 'N/A',
+                                        }
+
+                                        // push record into array to display on table
+                                        defaultData.push(paymentObject2)
+
+                                    }
+
+
+                                } else {
+
+                                    // map needed fields to an object to insert into array
+                                    var paymentObject = {
+                                        name: paymentRecord.CustomerName ? paymentRecord.CustomerName : 'N/A',
+                                        amount: paymentRecord.Amount ? paymentRecord.Amount : 'N/A',
+                                        tip: paymentRecord.Tip ? paymentRecord.Tip : 'N/A',
+                                        date: paymentRecord.TimeStamp ? paymentRecord.TimeStamp : 'N/A',
+                                    }
+
+                                    // push record into array to display on table
+                                    defaultData.push(paymentObject)
+                                }
+
+                            } else {
+                                noPaymentCount = (noPaymentCount + 1);
+                            }
+
+                        } else {
+                            null
+                        }
+
+                    } else {
+                        noSalesCount = (noSalesCount + 1)
+                    }
+
+
+                    // print error counts to screen
+                    $("#salesCount").text(noSalesCount)
+                    $("#noPaymentCount").text(noPaymentCount)
+
+
+                }
+
+                console.log(defaultData);
+
+                var dom = {
+                    $data: $('#data'),
+                    $table: $('#table'),
+                };
+
+                function json2table(json, $table) {
+                    var cols = Object.keys(json[1]);
+
+                    var headerRow = '';
+                    var bodyRows = '';
+
+                    function capitalizeFirstLetter(string) {
+                        return string.charAt(0).toUpperCase() + string.slice(1);
+                    }
+
+                    $table.html('<thead><tr></tr></thead><tbody></tbody>');
+
+                    cols.map(function(col) {
+                        headerRow += '<th>' + capitalizeFirstLetter(col) + '</th>';
+                    });
+
+                    json.map(function(row) {
+                        bodyRows += '<tr>';
+
+                        cols.map(function(colName) {
+                            bodyRows += '<td>' + row[colName] + '</td>';
+                        })
+
+                        bodyRows += '</tr>';
+                    });
+
+                    $table.find('thead tr').append(headerRow);
+                    $table.find('tbody').append(bodyRows);
+                }
+
+                dom.$data.val(JSON.stringify(defaultData));
+                json2table(defaultData, dom.$table);
+
+                dom.$data.on('input', function() {
+                    json2table(JSON.parse(dom.$data.val()), dom.$table);
+                });
+
+            });
+
+        });
+    </script>
+
+
+</body></html>
